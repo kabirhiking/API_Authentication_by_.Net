@@ -1,0 +1,138 @@
+
+
+
+
+--> .NET Setup
+    1. Download and Install SDK .NET from official Site
+
+--> Project creation (Console Application)
+    Navigate to your preferred folder and run:
+        
+        $ dotnet new console -n AppName
+        $ cd AppName
+        $ dotnet run
+
+
+--> Project creation (Web API)
+    1. Creating an ASP.NET Core App:
+        Navigate to your preferred folder and run:
+
+        $ dotnet new webapi -n MyWebApp
+        $ cd MyWebApp
+        $ dotnet run
+
+    2. Example Minimal API(Program.cs):
+
+        var builder = WebApplication.CreateBuilder(args);
+
+        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+        builder.Services.AddOpenApi();
+        // Register support for MVC-style controllers
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+
+        var app = builder.Build();
+
+        // Redirect HTTP requests to HTTPS
+        app.UseHttpsRedirection();
+
+        app.MapGet("/", () => "Hello, ASP.NET Core!");
+
+        // Map controller routes like /api/categories
+        app.MapControllers();
+        app.Run();
+
+
+--> Database Setup (SQLite)
+    1. Install SQLite and EF Core Packages
+    Open your project directory in the terminal. Run the following commands:
+
+        $ dotnet add package Microsoft.EntityFrameworkCore.Sqlite
+        $ dotnet add package Microsoft.EntityFrameworkCore.Tools
+    
+
+    2. Update Your Program.cs File
+    Register the DbContext for SQLite. And Replace the existing in-memory service.
+        
+        using app_name.Models;
+        using app_name.Services;
+        using Microsoft.EntityFrameworkCore;
+
+        var builder = WebApplication.CreateBuilder(args);
+        
+        // Register the SQLite DbContext
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+    3. Add the SQLite Connection String in appsettings.json
+
+        {
+        "ConnectionStrings": {
+            "DefaultConnection": "Data Source=database_name.db"
+        },
+        "Logging": {
+            "LogLevel": {
+            "Default": "Information",
+            "Microsoft.AspNetCore": "Warning"
+            }
+        },
+        "AllowedHosts": "*"
+        }
+
+        Data Source=database_name.db means the SQLite database file will be created in your project directory.
+
+
+    4. Create the AppDbContext Class (Database Context)
+
+        // /Models/AppDbContext.cs
+        using Microsoft.EntityFrameworkCore;
+
+        namespace app_name.Models
+        {
+            public class AppDbContext : DbContext
+            {
+                public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
+                public DbSet<table_name> table_attribute_name { get; set; }
+            }
+        }
+
+        Here,
+        -- DbContext is the EF Core class that manages database connections and CRUD operations.
+        -- DbSet<Category> represents the Categories table in the SQLite database.
+
+    5. Update the your Model (Make it Database Ready)
+
+    6. Update the Service to Use Database (Not In-Memory List) (Optional and not Recommended)
+
+        // /Services/CategoryService.cs
+        using ecommerce_basic_web_api.Models;
+        using Microsoft.EntityFrameworkCore;
+
+        namespace ecommerce_basic_web_api.Services
+        {   
+            public class CategoryService : ICategoryService
+            {
+                private readonly AppDbContext _dbContext;
+
+                public CategoryService(AppDbContext dbContext)
+                {
+                    _dbContext = dbContext;
+                }
+
+                // Remaining codes
+            }
+        }
+
+    7. Run Database Migrations to Create the SQLite Database
+        -- Install the EF Tools (if not already installed):
+            $ dotnet tool install --global dotnet-ef
+
+        -- Add Initial Migration (Generate Database Schema):
+            $ dotnet ef migrations add InitialCreate
+
+        -- Apply Migration (Create Database and Tables):
+            $ dotnet ef database update
+
+    This will create the SQLite database file (database_name.db)
